@@ -5,6 +5,7 @@ Repository that helps me to develope using different computers. Not an actual fu
 
 ### Packages
 * Twitter: [Twython](https://github.com/ryanmcgrath/twython)
+* Serial comunication: [PySerial](https://pythonhosted.org/pyserial/)
 
 
 ### References
