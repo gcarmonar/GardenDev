@@ -66,6 +66,7 @@ if data[0] == "D":
 	text = timeText + "," + str(temp) + "," + (text[1][1:]) + "," + (text[2][1:])
 	print text 
 
+	fo = open("GardenLog.txt", 'a')
 	fo.write(text)
 	fo.close()
 
