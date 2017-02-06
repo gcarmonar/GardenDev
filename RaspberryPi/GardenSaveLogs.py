@@ -49,6 +49,15 @@ if data[0] == "D":
 	hour = localtime[3]
 	minutes = localtime[4]
 	seconds = localtime[5]
+
+	# Correct format
+	if hour < 10:
+		hour = '0'+str(hour)
+	if minutes < 10:
+		minutes = '0'+str(minutes)
+	if seconds < 10:
+		seconds = '0'+str(seconds)
+
 	timeText = str(year) + '/' + str(month) + '/' + str(day) + ' ' + str(hour) + ':' + str(minutes) + ':' + str(seconds)  
 	#sensors = ser.readline()
 	sensors = "t218 m915 l887"
@@ -56,6 +65,9 @@ if data[0] == "D":
 	temp = (int(text[0][1:]))/10.0
 	text = timeText + "," + str(temp) + "," + (text[1][1:]) + "," + (text[2][1:])
 	print text 
+
+	fo.write(text)
+	fo.close()
 
 
 
