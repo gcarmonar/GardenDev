@@ -1,5 +1,3 @@
-
-
 '''
 Receives serial data from Arduino, saves the data in a local database and 
 sends a Twitter every hour aprox with the actual status of the garden. 
@@ -22,9 +20,10 @@ import time
 
 #--- Objects --------------------------------------------------------------
 #ser = serial.Serial('/dev/ttyUSB0')		#Linux
-ser = serial.Serial('COM7', 9600, timeout=1)		#Windows
+ser = serial.Serial('COM7', 9600, timeout=10)		#Windows
 
 
+data = "  "
 
 
 # def GetLocalTime():
@@ -40,6 +39,7 @@ ser = serial.Serial('COM7', 9600, timeout=1)		#Windows
 
 while True:
 	data = ser.readline()
+	print "DATA:" + data
 	#data = "Data"
 
 	if data[0] == "D":
@@ -72,7 +72,8 @@ while True:
 
 		# Makes sure that data set is completly transmitted.
 		if sensors[-3:-2] == 'E':
-			fo = open("GardenLog.txt", 'a')
+			logName = str(year) + '_' + str(month) + '_' + str(day) + '___' + str(hour)
+			fo = open(logName, 'a')
 			fo.write(text)
 			fo.close()
 		else:
