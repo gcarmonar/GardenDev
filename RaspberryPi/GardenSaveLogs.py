@@ -39,7 +39,7 @@ import time
 
 
 #data = ser.readline()
-data = "Dod"
+data = "Data"
 
 if data[0] == "D":
 	localtime = time.localtime(time.time())
@@ -60,10 +60,10 @@ if data[0] == "D":
 
 	timeText = str(year) + '/' + str(month) + '/' + str(day) + ' ' + str(hour) + ':' + str(minutes) + ':' + str(seconds)  
 	#sensors = ser.readline()
-	sensors = "t218 m915 l887"
+	sensors = "ta248 ma915 la887"
 	text = sensors.split()
-	temp = (int(text[0][1:]))/10.0
-	text = timeText + "," + str(temp) + "," + (text[1][1:]) + "," + (text[2][1:])
+	temp = (int(text[0][2:]))/10.0
+	text = timeText + "," + str(temp) + "," + (text[1][2:]) + "," + (text[2][2:]) + '\n'
 	print text 
 
 	fo = open("GardenLog.txt", 'a')
