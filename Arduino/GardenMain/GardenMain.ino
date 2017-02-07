@@ -4,7 +4,7 @@
 #define HIGH_TEMP_LED_PIN 6
 #define LOW_TEMP_LED_PIN  5
 
-#define NUMBER_SAMPLES    60/5 //One minute / 5 seconds each sample
+#define NUMBER_SAMPLES    10 //One minute / 5 seconds each sample
 #define TASK_50_MS        50
 #define TASK_500_MS       500
 #define TASK_5_SEC        1000*5  //Sample time
@@ -81,13 +81,24 @@ void Task500ms(){
   int moist = GetAverage(moistArray);
   int light = GetAverage(lightArray);
 
-  Serial.print("Temp [C]: ");
-  Serial.println(temp);
-  Serial.print("Moisture: ");
-  Serial.println(moist);
-  Serial.print("Light: ");
-  Serial.println(light);
-  Serial.println("-----------------");
+//  Serial.print("Temp [C]: ");
+//  Serial.println(temp);
+//  Serial.print("Moisture: ");
+//  Serial.println(moist);
+//  Serial.print("Light: ");
+//  Serial.println(light);
+//  Serial.println("-----------------");
+
+  Serial.println("D");
+  Serial.print("ta");
+  Serial.print(temp);
+  Serial.print(" ma");
+  Serial.print(moist);
+  Serial.print(" la");
+  Serial.print(light);
+  Serial.println("E");
+
+
 
   StatusLeds(temp, moist, light);
 }
@@ -95,9 +106,11 @@ void Task500ms(){
 
 void ReadTemp(){
   int input = analogRead(TEMP_PIN);
-  float temp = (((float)input*0.488) - 50.0)*10;
+//  Serial.print("RAW: ");
+//  Serial.println(input);
+  int temp = (((float)input*4.88) - 500.0);
 
-  tempArray[sample] = (int)temp;
+  tempArray[sample] = temp;
 }
 
 

@@ -16,12 +16,13 @@ https://www.tutorialspoint.com/python/python_files_io.htm
 '''
 
 #--- Libraries ------------------------------------------------------------
-#import serial
-#from twython import Twython, TwythonError
+import serial
+from twython import Twython, TwythonError
 import time
 
 #--- Objects --------------------------------------------------------------
-#ser = serial.Serial('/dev/ttyUSB0')
+#ser = serial.Serial('/dev/ttyUSB0')		#Linux
+ser = serial.Serial('COM7', 9600, timeout=1)		#Windows
 
 
 
@@ -37,45 +38,53 @@ import time
 # 	return localtime
 
 
+while True:
+	data = ser.readline()
+	#data = "Data"
 
-#data = ser.readline()
-data = "Data"
+	if data[0] == "D":
+		localtime = time.localtime(time.time())
+		year = localtime[0]
+		month = localtime[1]
+		day = localtime[2]
+		hour = localtime[3]
+		minutes = localtime[4]
+		seconds = localtime[5]
 
-if data[0] == "D":
-	localtime = time.localtime(time.time())
-	year = localtime[0]
-	month = localtime[1]
-	day = localtime[2]
-	hour = localtime[3]
-	minutes = localtime[4]
-	seconds = localtime[5]
+		# Correct format
+		if hour < 10:
+			hour = '0'+str(hour)
+		if minutes < 10:
+			minutes = '0'+str(minutes)
+		if seconds < 10:
+			seconds = '0'+str(seconds)
 
-	# Correct format
-	if hour < 10:
-		hour = '0'+str(hour)
-	if minutes < 10:
-		minutes = '0'+str(minutes)
-	if seconds < 10:
-		seconds = '0'+str(seconds)
+		timeText = str(year) + '/' + str(month) + '/' + str(day) + ' ' + str(hour) + ':' + str(minutes) + ':' + str(seconds)  
+		
+		sensors = ser.readline()
+		#sensors = "ta248 ma915 la887"
+		print "sensors: " + sensors
 
-	timeText = str(year) + '/' + str(month) + '/' + str(day) + ' ' + str(hour) + ':' + str(minutes) + ':' + str(seconds)  
-	#sensors = ser.readline()
-	sensors = "ta248 ma915 la887"
-	text = sensors.split()
-	temp = (int(text[0][2:]))/10.0
-	text = timeText + "," + str(temp) + "," + (text[1][2:]) + "," + (text[2][2:]) + '\n'
-	print text 
+		text = sensors.split()
+		temp = (int(text[0][2:]))/10.0
+		text = timeText + "," + str(temp) + "," + (text[1][2:]) + "," + (text[2][2:-1]) + '\n'
+		print "text " + text
 
-	fo = open("GardenLog.txt", 'a')
-	fo.write(text)
-	fo.close()
-
+		# Makes sure that data set is completly transmitted.
+		if sensors[-3:-2] == 'E':
+			fo = open("GardenLog.txt", 'a')
+			fo.write(text)
+			fo.close()
+		else:
+			print "Error in data..."
+			print sensors[-3:-2]
 
 
-	# lt = time.localtime(time.time())
-	# file_name = "Garden_" + str(lt[0]) + "_" + str(lt[1]) + "_" + str(lt[2]) + "___" + str(lt[3])
-	# fo = open(file_name, "a")
-	# fo.write()
+
+		# lt = time.localtime(time.time())
+		# file_name = "Garden_" + str(lt[0]) + "_" + str(lt[1]) + "_" + str(lt[2]) + "___" + str(lt[3])
+		# fo = open(file_name, "a")
+		# fo.write()
 
 
 
