@@ -7,19 +7,19 @@
 #define LIGHT_SENSOR_A_PIN  A2
 #define MOIST_SENSOR_B_PIN  A3
 #define TEMP_SENSOR_B_PIN   A4
-#define LIGHT_SENSOR_V_PIN  A5
-#define HIGH_TEMP_LED_PIN   6
-#define LOW_TEMP_LED_PIN    5
+#define LIGHT_SENSOR_B_PIN  A5
+#define HIGH_TEMP_LED_PIN   5
+#define LOW_TEMP_LED_PIN    6
 #define RHT03_DATA_PIN      2
 
 //--- Constants ------------------------------------------------------------------
-#define NUMBER_SAMPLES      10       //One minute / 5 seconds each sample
+#define NUMBER_SAMPLES      5       //One minute / 5 seconds each sample
 #define TASK_50_MS          50
 #define TASK_1_SEC          1000
-#define TASK_5_SEC          1000*5  //Sample time
-#define TASK_1_MIN          1000*60 //Send data to display and Raspberry Pi
-#define HIGH_TEMP_ALERT     225     //Celcious*10
-#define LOW_TEMP_ALERT      210     //Celcious*10
+#define TASK_5_SEC          1000*1  //Sample time
+#define TASK_1_MIN          1000*5 //Send data to display and Raspberry Pi
+#define HIGH_TEMP_ALERT     300     //Celcious*10
+#define LOW_TEMP_ALERT      150     //Celcious*10
 #define LOW_MOIST_ALERT     500     //Calibrated
 #define LOW_HUM_ALERT       10      //in %
 
@@ -134,7 +134,7 @@ void Task1sec(){
 //  Serial.println(light);
 //  Serial.println("-----------------");
 
-  ReadHum();
+  //ReadHum();
 
 }
 
@@ -159,6 +159,8 @@ void Task1min(){
   int moistB = GetAverage(moistArrayB);
   int lightB = GetAverage(lightArrayB);
   int hum = GetAverage(humArray);
+  int airTemp = GetAverage(airTempArray);
+  
   //Tell Raspberry Pi we have data
   Serial.println("D");
   //Data in pot A
@@ -169,20 +171,26 @@ void Task1min(){
   Serial.print(" la");
   Serial.print(lightA);
   //Data in pot B
-  Serial.print("tb");
+  Serial.print(" tb");
   Serial.print(tempB);
   Serial.print(" mb");
   Serial.print(moistB);
   Serial.print(" lb");
   Serial.print(lightB);
+  //Data Humidity and ambient temp
+  Serial.print(" hh");
+  Serial.print(hum);
+  Serial.print(" tt");
+  Serial.print(airTemp);
   //End of transmission
   Serial.println("E");
-
   //Alerts calculations
-  tempStatus = ((tempA >= HIGH_TEMP_ALERT)<<3) || ((tempA <= LOW_TEMP_ALERT)<<2) || 
-               ((tempB >= HIGH_TEMP_ALERT)<<1) || (tempB <= LOW_TEMP_ALERT);
-  moistStatus = (moistA <= LOW_MOIST_ALERT)<<1 || (moistB <= LOW_MOIST_ALERT);
+  tempStatus = 0;
+  tempStatus = ((tempA >= HIGH_TEMP_ALERT)<<3)&0x8 | ((tempA <= LOW_TEMP_ALERT)<<2)&0x4
+               | ((tempB >= HIGH_TEMP_ALERT)<<1)&0x2 | (tempB <= LOW_TEMP_ALERT)&0x1;
+  moistStatus = ((moistA <= LOW_MOIST_ALERT)<<1)&0x2 | (moistB <= LOW_MOIST_ALERT)&0x1;
   humStatus = (hum <= LOW_HUM_ALERT);
+  Serial.println(tempStatus);
   StatusLeds(tempStatus, moistStatus, humStatus);
 }
 
@@ -190,17 +198,26 @@ void ReadTemp(){
   int input = analogRead(TEMP_SENSOR_A_PIN);
   int temp = (((float)input*4.88) - 500.0);
   tempArrayA[sample] = temp;
+
+  input = analogRead(TEMP_SENSOR_B_PIN);
+  temp = (((float)input*4.88) - 500.0);
+  tempArrayB[sample] = temp;
 }
 
 void ReadLight(){
   int input = analogRead(LIGHT_SENSOR_A_PIN);
   lightArrayA[sample] = input;
+
+  input = analogRead(LIGHT_SENSOR_B_PIN);
+  lightArrayB[sample] = input;
 }
 
 void ReadMoist(){
   int input = analogRead(MOIST_SENSOR_A_PIN);
-  input = 0;
   moistArrayA[sample] = input;
+
+  input = analogRead(MOIST_SENSOR_B_PIN);
+  moistArrayB[sample] = input;
 }
 
 
@@ -223,10 +240,14 @@ void StatusLeds(int tempStatus, int moistStatus, boolean humStatus){
       digitalWrite(HIGH_TEMP_LED_PIN, LOW);
       break;
     case 1:
+    case 4:
+    case 5:
       digitalWrite(LOW_TEMP_LED_PIN, HIGH);
       digitalWrite(HIGH_TEMP_LED_PIN, LOW);
       break;
     case 2:
+    case 8:
+    case 10:
       digitalWrite(LOW_TEMP_LED_PIN, LOW);
       digitalWrite(HIGH_TEMP_LED_PIN, HIGH);
       break;
@@ -256,6 +277,8 @@ void ReadHum(){
     humFail=0;
   }else{
     humFail++;
+    Serial.println("Sensor fail!");
+    delay(1000);
   }
 }
 
