@@ -1,0 +1,5 @@
+sudo apt-get update
+sudo apt-get install imagemagick -y
+
+Another option here:
+https://www.raspberrypi.org/documentation/usage/camera/raspicam/timelapse.md
