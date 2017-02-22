@@ -4,22 +4,35 @@
 #=== Libraries =============================================================
 import time
 import serial
+# https://github.com/ryanmcgrath/twython/blob/master/docs/usage/advanced_usage.rst
+# from twython import Twython, TwythonError
+# https://www.raspberrypi.org/documentation/usage/camera/python/README.md
+# import picamera
 
 #=== Constants =============================================================
+# Twitter account details
+APP_KEY 				= '0'
+APP_SECRET 				= '0'
+OAUTH_TOKEN 			= '0'
+OAUTH_TOKEN_SECRET		= '0'
 # Flags constants
+SERIAL_DATA_ERROR		= 2
 SERIAL_DATA_AVAILABLE	= 1
-SERIAL_DATA_ERROR	 	= 0
+NO_SERIAL_DATA			= 0
 PROCESSED_VALID_DATA 	= 1
 PROCESSED_DATA_ERROR 	= 0
 LOG_SUCCESS				= 1
 LOG_ERROR				= 0
 # Serial
-SERIAL_PORT				= 'COM7'
+SERIAL_PORT				= 'COM7'			# Windows
+SERIAL_PORT				= '/dev/ttyAMA0'	# Raspberry Pi
 SERIAL_BAUD 			= 9600
-SERIAL_TIMEOUT 			= 1
+SERIAL_TIMEOUT 			= 1					# In seconds
 
 #=== Objects ===============================================================
 ser = serial.Serial(SERIAL_PORT, SERIAL_BAUD, timeout=SERIAL_TIMEOUT)
+# twitter = Twython(APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET)
+# camera = picamera.PiCamera()
 
 #=== Variables =============================================================
 # Dictionaries
@@ -37,10 +50,16 @@ logName = ''
 def SaveLog():
 	print "Save Log"
 
-
+def TakePicture():
+	print "Take Picture"
+	pictureName = dateString + '.jpg'
+	camera.capture(pictureName)
 
 def SendTwitter():
 	print "Send Twitter"
+	# photo = open('images/image.jpg', 'rb')	
+	# response = twitter.upload_media(media=photo)
+	# twitter.update_status(status='Checkout this cool image!', media_ids=[response['media_id']])
 
 def ReadSerialPort():
 	# print "Read Serial Port"
@@ -53,7 +72,8 @@ def ReadSerialPort():
 			if data[-3:-2] == "E":	# Last char before eol
 				#serialFlag = 1
 				return SERIAL_DATA_AVAILABLE
-	return SERIAL_DATA_ERROR
+		return SERIAL_DATA_ERROR
+	return NO_SERIAL_DATA
 
 def UpdateDate():
 	print "Get Time"
@@ -68,21 +88,6 @@ def UpdateDate():
 
 def ProcessData():
 	print "Processing Data"
-
-	# year = localtime[0]
-	# month = localtime[1]
-	# day = localtime[2]
-	# hour = localtime[3]
-	# minutes = localtime[4]
-	# seconds = localtime[5]
-
-	# # Correct format
-	# 	if hour < 10:
-	# 		hour = '0'+str(hour)
-	# 	if minutes < 10:
-	# 		minutes = '0'+str(minutes)
-	# 	if seconds < 10:
-	# 		seconds = '0'+str(seconds)
 
 	dateString = str(actualTime['year']) + '_'
 	dateString += str(actualTime['month']) + '_'
@@ -105,8 +110,6 @@ def ProcessData():
 		dateString += '0' + str(actualTime['seconds']) + '_'
 	else:
 		dateString += str(actualTime['seconds']) + '_'
-
-
 
 	return 1
 
@@ -133,7 +136,7 @@ def main():
 			lastDate = actualDate
 
 		if serialFlag == SERIAL_DATA_AVAILABLE:
-			serialFlag = 0
+			serialFlag = NO_SERIAL_DATA
 			dataFlag  = ProcessData()
 			if dataFlag == PROCESSED_VALID_DATA:
 				logFlag = SaveLog()
