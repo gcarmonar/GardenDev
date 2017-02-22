@@ -6,13 +6,17 @@ import time
 import serial
 
 #=== Constants =============================================================
-SERIAL_DATA_AVAILABLE = 1
-PROCESSED_VALID_DATA = 1
-LOG_SUCCESS	= 1
+# Flags constants
+SERIAL_DATA_AVAILABLE	= 1
+SERIAL_DATA_ERROR	 	= 0
+PROCESSED_VALID_DATA 	= 1
+PROCESSED_DATA_ERROR 	= 0
+LOG_SUCCESS				= 1
+LOG_ERROR				= 0
 # Serial
-SERIAL_PORT	= 'COM7'
-SERIAL_BAUD = 9600
-SERIAL_TIMEOUT = 1
+SERIAL_PORT				= 'COM7'
+SERIAL_BAUD 			= 9600
+SERIAL_TIMEOUT 			= 1
 
 #=== Objects ===============================================================
 ser = serial.Serial(SERIAL_PORT, SERIAL_BAUD, timeout=SERIAL_TIMEOUT)
@@ -46,11 +50,10 @@ def ReadSerialPort():
 		# print data
 		if data[0] == "D":
 			# print "Last is: " + data[-3:-2] + "\n"
-			if data[-3:-2] == "A":	# Last char before eol
+			if data[-3:-2] == "E":	# Last char before eol
 				#serialFlag = 1
-				return 1
-	return 0
-	#ser.flush()
+				return SERIAL_DATA_AVAILABLE
+	return SERIAL_DATA_ERROR
 
 def UpdateDate():
 	print "Get Time"
@@ -121,7 +124,7 @@ def main():
 	while True:
 		# Always do it
 		timer = time.time()
-		ReadSerialPort()
+		serialFlag = ReadSerialPort()
 		UpdateDate()
 
 		# If hour has changed then send a Twitt
