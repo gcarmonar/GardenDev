@@ -55,7 +55,7 @@ lastDate = {}
 serialFlag = 0
 dataFlag = 0
 logFlag = 0
-twitterAlertFlag = 0
+twitterSendAlertFlag = [0,0]
 # Global general variables
 dateString = ''
 logFileName = ''
@@ -86,22 +86,37 @@ def TakePicture():
 
 def SendTwitter():
 	print "Send Twitter"
-	# photo = open('images/image.jpg', 'rb')	
-	# response = twitter.upload_media(media=photo)
-	# # Add Temperature, soil moisture and light to message
-	# message = "Hi, the temperature is %s C"
-	# twitter.update_status(status=message, media_ids=[response['media_id']])
+
+	global twitterSendAlertFlag, alerts, pictureName
+
+	if sendStatusTwitter == 1:
+		print "Sending picture via Twitter"
+		# photo = open('images/image.jpg', 'rb')	
+		# response = twitter.upload_media(media=photo)
+		# # Add Temperature, soil moisture and light to message
+		# message = "Hi, the temperature is %s C"
+		# twitter.update_status(status=message, media_ids=[response['media_id']])
 
 
+	# Twitter send alerts
+	for i in range(2):
+		if alerts[i] != 0:
+			if twitterSendAlertFlag[i] == 0:
+				if i == TEMPERATURE:
+					# Send temp alert
+					if alerts[i] == 1:
+						text = '[ALERT] : I am getting too hot!'
+					else:
+						text = '[ALERT] : I am getting too cold... Brrr!'
+					twitter.update_status(status=text)
+				elif i == MOISTURE:
+					# Send I'm thisty twitter
+					text = '[ALERT] : I am thisty! =('
+					twitter.update_status(status=text)
+				twitterSendAlertFlag[i] = 1
+		else:
+			twitterSendAlertFlag[i] = 0
 
-	if alerts[TEMPERATURE] != NO_TEMP_ALERT:
-		# Send alert temp is not good
-		twitterAlertFlag |= 1
-	if alerts[MOISTURE] != LOW_SOIL_MOISTURE_ALERT:
-		twitterAlertFlag |= 2 
-
-	if (twitterAlertFlag & 4) == 1:
-		twitterAlertFlag = 0
 
 def ReadSerialPort():
 	print "Read Serial Port"
@@ -167,6 +182,7 @@ def ProcessData():
 
 	# Process Serial Data
 	# Check for extreme temperatures
+	
 	# Check for Dry soil
 	print "Serial data: "
 	print serialData
