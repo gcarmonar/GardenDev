@@ -21,8 +21,8 @@
 
 //--- Constants ------------------------------------------------------------------
 #define NUMBER_SAMPLES      12      //One minute / 5 seconds each sample
-#define TASK_5_SEC          1000*1  //Sample time
-#define TASK_1_MIN          1000*5  //Send data to display and Raspberry Pi
+#define TASK_5_SEC          1000*3  //Sample time
+#define TASK_1_MIN          1000*10 //Send data to display and Raspberry Pi
 #define HIGH_TEMP_ALERT     300     //Celcious*10
 #define LOW_TEMP_ALERT      150     //Celcious*10
 #define LOW_MOIST_ALERT     500     //Calibrated
@@ -30,6 +30,8 @@
 // This is like a counter. If for 12 hours the light is low, show alert
 #define LOW_LIGHT_COUNTER   720     // 1 min * 60 min/hour * 12 hour 
 #define LOW_LIGHT_ALERT     500     //Calibrated
+#define SERIAL_SEND_SUCCESS 1
+#define SERIAL_SEND_ERROR   0
 
 //--- Objects --------------------------------------------------------------------
 RHT03 rht;
@@ -43,12 +45,17 @@ int task5secFlag = 0;
 int task1minFlag = 0;
 int sample =       0;
 int humFail =      0;
+int lowLightCounter = 0;
+int valSensorsArray[10] = {};
 
 int gTempArray[NUMBER_SAMPLES] =  {};
 int gmoistArray[NUMBER_SAMPLES] = {};
 int aLightArray[NUMBER_SAMPLES] = {};
 int aTempArray[NUMBER_SAMPLES] =  {};
-int aHumArray[NUMBER_SAMPLES] =    {};
+int aHumArray[NUMBER_SAMPLES] =   {};
+
+bool SerialStatusFlag;
+
 
 //--- Prototypes -----------------------------------------------------------------
 void Task5sec();
@@ -81,7 +88,8 @@ void loop(){
 
   if (TASK_1_MIN <= (millis()- task_1_min)){
     task1minFlag = 1;
-    task_1_min = millis();
+    //task_1_min = millis();
+    task_1_min += TASK_1_MIN;
   }
 
   if (task5secFlag){
@@ -93,62 +101,11 @@ void loop(){
     Task1min();
     task1minFlag = 0;
   }
-  void ReadHum();
-  delay(1000);
+  
 
 }
 
 //--- Functions ------------------------------------------------------------------
-
-void Task5sec(){
-  if (sample == NUMBER_SAMPLES){
-    sample = 0;
-  }
-  ReadMoist();
-  ReadTemp();
-  ReadLight();
-  sample++; 
-}
-
-void Task1min(){
-  int gTempe = GetAverage(gTempArray);
-  int gMoist = GetAverage(gmoistArray);
-  int aLight = GetAverage(aLightArray);
-  int aTempe = GetAverage(aTempArray);
-
-  // ProcessData();
-  // UpdateDisplay();
-  // SendData();
-
-
-
-  //int aHumid = GetAverage(aHumArray);
-  
-  // //Tell Raspberry Pi we have data
-  // Serial.println("D");
-  // //Data in pot A
-  // Serial.print("ta");
-  // Serial.print(tempA);
-  // Serial.print(" ma");
-  // Serial.print(moistA);
-  // Serial.print(" la");
-  // Serial.print(lightA);
-  // //Data in pot B
-  // Serial.print(" tb");
-  // Serial.print(tempB);
-  // Serial.print(" mb");
-  // Serial.print(moistB);
-  // Serial.print(" lb");
-  // Serial.print(lightB);
-  // //Data Humidity and ambient temp
-  // Serial.print(" hh");
-  // Serial.print(hum);
-  // Serial.print(" tt");
-  // Serial.print(airTemp);
-  // //End of transmission
-  // Serial.println("E");
-
-}
 
 void ReadTemp(){
   int input, temp;
@@ -168,21 +125,11 @@ void ReadLight(){
 }
 
 void ReadMoist(){
+  digitalWrite(G_MOIST_VCC_PIN, HIGH);
+  delay(20);
   int input = analogRead(G_MOIST_DATA_PIN);
   gmoistArray[sample] = input;
-}
-
-
-int GetAverage(int data[]){
-  int avg=0;
-
-  for (int i = 0; i < NUMBER_SAMPLES; i++){
-    avg += data[i];
-  }
-
-  avg = avg / NUMBER_SAMPLES;
-
-  return avg;
+  digitalWrite(G_MOIST_VCC_PIN, LOW);
 }
 
 void ReadHum(){
@@ -206,7 +153,102 @@ void ReadHum(){
   }else{
     humFail++;
     Serial.println("Sensor fail!");
-    delay(1000);
+    //delay(1000);
   }
 }
 
+int GetAverage(int data[]){
+  int avg=0;
+
+  for (int i = 0; i < NUMBER_SAMPLES; i++){
+    avg += data[i];
+  }
+
+  avg = avg / NUMBER_SAMPLES;
+
+  return avg;
+}
+
+void ProcessData(){
+  int gTempe = GetAverage(gTempArray);
+  int gMoist = GetAverage(gmoistArray);
+  int aLight = GetAverage(aLightArray);
+  int aTempe = GetAverage(aTempArray);
+  int aHumid = GetAverage(aHumArray);
+
+  bool tempAlertFlag = ((gTempe > HIGH_TEMP_ALERT) | (gTempe < LOW_TEMP_ALERT)) \
+                        | ((aTempe > HIGH_TEMP_ALERT) | (aTempe < LOW_TEMP_ALERT));
+  bool moistAlertFlag = (gMoist < LOW_MOIST_ALERT);
+
+  if (aLight < LOW_LIGHT_ALERT){
+    lowLightCounter++;
+  }else if (lowLightCounter > 0){
+    lowLightCounter--;
+  }
+  bool lightAlertFlag = (lowLightCounter > LOW_LIGHT_COUNTER);
+
+  bool humAlertFlag = (aHumid < LOW_HUM_ALERT);
+
+  int flagAlert = tempAlertFlag << 3 | moistAlertFlag << 2 | lightAlertFlag << 1 | humAlertFlag;
+
+
+  valSensorsArray[0] = gTempe;
+  valSensorsArray[1] = gMoist;
+  valSensorsArray[2] = aLight;
+  valSensorsArray[3] = aTempe;
+  valSensorsArray[4] = aHumid;
+  valSensorsArray[4] = flagAlert;
+
+}
+
+bool SendData(){
+  char buffer[2];
+
+  Serial.println('D');
+  Serial.readBytes(buffer, 1);
+
+  if (buffer[0] == 'O'){
+    Serial.print("GT");
+    Serial.print(valSensorsArray[0]);
+    Serial.print(",GM");
+    Serial.print(valSensorsArray[1]);
+    Serial.print(",AL");
+    Serial.print(valSensorsArray[2]);
+    Serial.print(",GT");
+    Serial.print(valSensorsArray[3]);
+    Serial.print(",AT");
+    Serial.print(valSensorsArray[4]);
+    Serial.print(",AH");
+    Serial.print(valSensorsArray[5]);
+    Serial.println(",E");
+    
+    Serial.readBytes(buffer, 1);
+    if (buffer[0] == 'K'){
+      return SERIAL_SEND_SUCCESS;
+    }
+
+  }
+  return SERIAL_SEND_ERROR;
+
+}
+
+void Task5sec(){
+  if (sample == NUMBER_SAMPLES){
+    sample = 0;
+  }
+  ReadMoist();
+  ReadTemp();
+  ReadLight();
+  ReadHum();
+  sample++;
+}
+
+void Task1min(){
+  ProcessData();
+  
+  // UpdateDisplay();
+  SerialStatusFlag = SendData();
+  Serial.print("Serial Flag = ");
+  Serial.println(SerialStatusFlag);
+  Serial.println(millis());
+}

@@ -128,9 +128,11 @@ def ReadSerialPort():
 	if len(data) > 0:
 		# print data
 		if data[0] == "D":
+			ser.write('O')
 			# print "Last is: " + data[-3:-2] + "\n"
 			if data[-3:-2] == "E":				# Last char before eol
 				# Save data into global var and split into a list
+				ser.write('K')
 				serialData = data[2:-4].split(',')	
 				return SERIAL_DATA_AVAILABLE
 		return SERIAL_DATA_ERROR
