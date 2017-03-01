@@ -143,8 +143,8 @@ void ReadHum(){
     float latestTempC = rht.tempC();
     
     // Now print the values:
-    Serial.println("Humidity: " + String(latestHumidity, 1) + " %");
-    Serial.println("Temp (C): " + String(latestTempC, 1) + " deg C");
+    // Serial.println("Humidity: " + String(latestHumidity, 1) + " %");
+    // Serial.println("Temp (C): " + String(latestTempC, 1) + " deg C");
 
     aHumArray[NUMBER_SAMPLES] = (int)(latestHumidity*10);
     //airTempArray[NUMBER_SAMPLES] = (int)(latestTempC);
@@ -152,7 +152,7 @@ void ReadHum(){
     humFail=0;
   }else{
     humFail++;
-    Serial.println("Sensor fail!");
+    // Serial.println("Sensor fail!");
     //delay(1000);
   }
 }
@@ -204,7 +204,7 @@ void ProcessData(){
 bool SendData(){
   char buffer[2];
 
-  Serial.println('D');
+  Serial.print('D');
   Serial.readBytes(buffer, 1);
 
   if (buffer[0] == 'O'){
@@ -247,8 +247,11 @@ void Task1min(){
   ProcessData();
   
   // UpdateDisplay();
+
   SerialStatusFlag = SendData();
-  Serial.print("Serial Flag = ");
-  Serial.println(SerialStatusFlag);
-  Serial.println(millis());
+  
+
+  // Serial.print("Serial Flag = ");
+  // Serial.println(SerialStatusFlag);
+  // Serial.println(millis());
 }

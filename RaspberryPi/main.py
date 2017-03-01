@@ -57,20 +57,20 @@ dataFlag = 0
 logFlag = 0
 twitterSendAlertFlag = [0,0]
 # Global general variables
-dateString = ''
 logFileName = ''
 pictureName = ''
 alerts = [NO_TEMP_ALERT,NO_SOIL_MOISTURE_ALERT]
 serialData = []
+logDateString = 'No time'
 
 #=== Functions =============================================================
 def SaveLog():
 	print "Save Log"
 
-	global logFileName, dateString, serialData
+	global logFileName, logDateString, serialData
 	
 	fp = open(logFileName, "a")
-	fp.write(dateString)
+	fp.write(logDateString)
 	for word in serialData:
 		fp.write(',')
 		fp.write(str(word))
@@ -81,7 +81,7 @@ def SaveLog():
 
 def TakePicture():
 	print "Take Picture"
-	# pictureName = dateString + '.jpg'
+	# pictureName = fileNameDateString + '.jpg'
 	# camera.capture(pictureName)
 
 def SendTwitter():
@@ -155,32 +155,45 @@ def UpdateDate():
 def ProcessData():
 	print "Processing Data"
 
-	global dateString, logFileName, pictureName, serialData, alerts
+	global logFileName, pictureName, serialData, alerts, logDateString
 
-	# Process time for saving log file
-	dateString = str(actualDate['year']) + '_'
-	dateString += str(actualDate['month']) + '_'
-	dateString += str(actualDate['day']) + '_'
-	dateString += '___'
+	# Process time for log file name
+	fileNameDateString = str(actualDate['year']) + '_'
+	fileNameDateString += str(actualDate['month']) + '_'
+	fileNameDateString += str(actualDate['day'])
+	fileNameDateString += '___'
+
+	# Date and time for logging data
+	logDateString = str(actualDate['year']) + '/'
+	logDateString += str(actualDate['month']) + '/'
+	logDateString += str(actualDate['day'])
+	logDateString += ' '
+
+
+
 
 	if actualDate['hour'] < 10:
-		dateString += '0' + str(actualDate['hour']) + '_'
+		fileNameDateString += '0' + str(actualDate['hour']) + '_'
+		logDateString += '0' + str(actualDate['hour']) + ':'
 	else:
-		dateString += str(actualDate['hour']) + '_'
+		fileNameDateString += str(actualDate['hour']) + '_'
+		logDateString += str(actualDate['hour']) + ':'
 
-	logFileName = dateString[:-1] + '.log'
+	logFileName = fileNameDateString[:-1] + '.log'
 
 	if actualDate['minutes'] < 10:
-		dateString += '0' + str(actualDate['minutes']) + '_'
+		fileNameDateString += '0' + str(actualDate['minutes']) + '_'
+		logDateString += '0' + str(actualDate['minutes']) + ':'
 	else:
-		dateString += str(actualDate['minutes']) + '_'
+		fileNameDateString += str(actualDate['minutes']) + '_'
+		logDateString += str(actualDate['minutes']) + ':'
 
-	pictureName = dateString[:-1] + '.jpg'
+	pictureName = fileNameDateString[:-1] + '.jpg'
 
 	if actualDate['seconds'] < 10:
-		dateString += '0' + str(actualDate['seconds'])
+		logDateString += '0' + str(actualDate['seconds'])
 	else:
-		dateString += str(actualDate['seconds'])
+		logDateString += str(actualDate['seconds'])
 
 	# Process Serial Data
 	# Check for extreme temperatures
